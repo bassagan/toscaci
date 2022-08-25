@@ -1,4 +1,4 @@
-package cli
+package v2
 
 import (
 	"context"
@@ -11,18 +11,16 @@ import (
 	"path/filepath"
 	"runtime"
 	"toscactl/entity"
-
 )
 
-
 var (
-	cfgFile string
-	Verbose bool
+	cfgFile   string
+	Verbose   bool
 	appConfig = &entity.ApplicationConfig{}
-	RootCmd = &cobra.Command{
+	RootCmd   = &cobra.Command{
 		Use:   "toscactl",
-		Long: `This application Allow you to manage Tosca remotely`,
-		Short:`This application Allow you to manage Tosca remotely`,
+		Long:  `This application Allow you to manage Tosca remotely`,
+		Short: `This application Allow you to manage Tosca remotely`,
 	}
 )
 
@@ -35,10 +33,10 @@ func Execute(ctx context.Context) {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().StringP("orchestratorURL","s",  "http://localhost:8080", "Tosca Orchestrator URL")
-	RootCmd.PersistentFlags().String("username",  "", "Tosca Server username")
-	RootCmd.PersistentFlags().String("password",  "", "Tosca Server password")
-	RootCmd.PersistentFlags().StringP("workingDir", "w","","Working Directory where entities and results are expected")
+	RootCmd.PersistentFlags().StringP("orchestratorURL", "s", "http://localhost:8080", "Tosca Orchestrator URL")
+	RootCmd.PersistentFlags().String("username", "", "Tosca Server username")
+	RootCmd.PersistentFlags().String("password", "", "Tosca Server password")
+	RootCmd.PersistentFlags().StringP("workingDir", "w", "", "Working Directory where entities and results are expected")
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file path, accept Environment Variable TOSCA_CONFIG (default is $HOME/.tosca-config.yaml) ")
 	RootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
 }
@@ -51,7 +49,7 @@ func initConfig() {
 	}
 
 	viper.SetConfigName("config") // name of config file (without extension)
-	if cfgFile != "" {                         // enable ability to specify config file via flag
+	if cfgFile != "" {            // enable ability to specify config file via flag
 		log.Debug("cfgFile: ", cfgFile)
 		viper.SetConfigFile(cfgFile)
 		configDir := path.Dir(cfgFile)
@@ -63,7 +61,7 @@ func initConfig() {
 	viper.AddConfigPath(dir)
 	if runtime.GOOS != "windows" {
 		viper.AddConfigPath("/etc/tosca")
-	}else{
+	} else {
 		viper.AddConfigPath("C:\\Program Files\\Tricentis\\Tosca\\")
 	}
 	viper.AddConfigPath("$HOME/.tosca")
@@ -72,37 +70,14 @@ func initConfig() {
 	viper.AddConfigPath(".")
 	viper.BindPFlags(RootCmd.PersistentFlags())
 
-
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		log.Infof("Using config file: %s", viper.ConfigFileUsed())
 	}
 	appConfig.Initialize()
-	if err:=viper.Unmarshal(&appConfig); err!=nil{
-		log.Errorf("Error when unmarshalling configuration %v",err)
+	if err := viper.Unmarshal(&appConfig); err != nil {
+		log.Errorf("Error when unmarshalling configuration %v", err)
 		os.Exit(1)
 	}
-
-	workingPath,err:=calculateWorkingPath(appConfig.WorkingDir)
-	if err!=nil{
-		log.Fatal(err)
-	}
-	appConfig.WorkingDir=workingPath
-
-}
-
-// calculateWorkingPath uses workingPath passed by argument or if nil uses process workingPath
-func calculateWorkingPath(workingPath string) (workingPathReturn string,err error){
-	if workingPath==""{
-		workingPathReturn, err = os.Getwd()
-		if err != nil {
-			return "",fmt.Errorf("error when getting working directory: %s",err)
-		}
-		workingPath = workingPathReturn
-		log.Debugf("no working Directory especified, selecting system working dir %s",workingPath)
-	}else{
-		log.Debugf("selected working DIrectory %s",workingPath)
-	}
-	return workingPathReturn,nil
 
 }
